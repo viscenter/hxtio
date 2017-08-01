@@ -14,5 +14,13 @@ target_include_directories(hxtio
 )
 
 # Example App
-add_executable(HXTIOTest HXTIOTest.cpp)
-target_link_libraries(HXTIOTest hxtio)
+add_executable(HXTIO-Example HXTIO-Example.cpp)
+target_link_libraries(HXTIO-Example hxtio)
+
+# OpenCV Example App
+option(HXT_USE_OPENCV "Use OpenCV library" off)
+if(HXT_USE_OPENCV)
+    find_package(OpenCV 3 REQUIRED)
+    add_executable(HXTIO-OpenCV HXTIO-OpenCV.cpp)
+    target_link_libraries(HXTIO-OpenCV hxtio opencv_core opencv_imgcodecs)
+endif()

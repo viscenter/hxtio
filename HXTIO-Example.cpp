@@ -1,6 +1,6 @@
 #include <iostream>
-#include <string>
-#include <HXTIO.hpp>
+
+#include "HXTIO.hpp"
 
 int main(int argc, char* argv[])
 {
@@ -9,13 +9,14 @@ int main(int argc, char* argv[])
     uint32_t binID = std::stoul(argv[2]);
 
     // Load the HXT
-    auto hxt = libhxt::HXT::Read(argv[1]);
+    auto hxt = libhxt::HXT::Read(path);
     hxt.printMetadata();
 
     // Get the bin
-    auto bin = hxt.bin(binID);
     auto label = hxt.binLabel(binID);
+    auto bin = hxt.bin(binID);
 
-    std::cout << bin(16, 49) << std::endl;
-    std::cout << label << std::endl;
+    // Print bin metadata
+    std::cout << "Energy: " << label << std::endl;
+    std::cout << "Size: " << bin.cols() << "x" << bin.rows() << std::endl;
 }
