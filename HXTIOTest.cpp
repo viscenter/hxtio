@@ -1,4 +1,4 @@
-
+#include <iostream>
 #include <string>
 #include <HXTIO.hpp>
 
@@ -15,4 +15,7 @@ int main(int argc, char* argv[])
     // Get the bin
     auto bin = hxt.bin(binID);
     auto label = hxt.binLabel(binID);
+
+    std::cout << bin(16, 49) << std::endl;
+    std::cout << label << std::endl;
 }

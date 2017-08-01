@@ -1,7 +1,8 @@
 #pragma once
-// HEXITEC IO
+
 #include <fstream>
-#include <vector>
+
+#include "HXTArrays.hpp"
 
 namespace libhxt
 {
@@ -19,27 +20,14 @@ public:
     /** Container index type */
     using Index_t = typename Container::size_type;
 
+    /** @brief Default constructor */
+    Array2D() = default;
+
     /** @brief Constructor with dimensions */
     Array2D(Index_t rows, Index_t cols) : rows_{rows}, cols_{cols}
     {
         data_.resize(rows * cols);
     }
-
-    /** @brief Element access */
-    virtual T& operator()(Index_t y, Index_t x)
-    {
-        return data_.at((y * cols_) + x);
-    }
-
-    /** @overload operator()(Index_t y, Index_t x) */
-    virtual const T& operator()(Index_t y, Index_t x) const
-    {
-        return data_.at((y * cols_) + x);
-    }
-
-protected:
-    /** Default constructor */
-    Array2D() = default;
 
     /** Constructor for initialization from existing STL container */
     Array2D(
@@ -51,6 +39,32 @@ protected:
     {
     }
 
+    /** @brief Set size of array
+     *
+     * @warning Does not guarantee validity of stored values after resize
+     */
+    void setDimensions(Index_t rows, Index_t cols)
+    {
+        rows_ = rows;
+        cols_ = cols;
+        data_.resize(rows * cols);
+    }
+
+    Index_t rows() { return rows_; }
+    Index_t cols() { return cols_; }
+
+    /** @brief Element access */
+    T& operator()(Index_t y, Index_t x) { return data_.at((y * cols_) + x); }
+
+    /** @overload operator()(Index_t y, Index_t x) */
+    const T& operator()(Index_t y, Index_t x) const
+    {
+        return data_.at((y * cols_) + x);
+    }
+
+    Container data() const { return data_; }
+
+protected:
     /** Number of rows */
     Index_t rows_{0};
     /** Number of columns */
@@ -64,7 +78,7 @@ protected:
  * @brief Generic 3D array template
  */
 template <typename T>
-class Array3D : public Array2D<T>
+class Array3D
 {
 public:
     /** Storage container alias */
@@ -72,52 +86,70 @@ public:
     /** Container index type */
     using Index_t = typename Container::size_type;
 
+    /** @brief Default constructor */
+    Array3D() = default;
+
     /** @brief Constructor with dimensions */
-    Array3D(Index_t pages, Index_t rows, Index_t cols) : pages_{pages}
+    Array3D(Index_t pages, Index_t rows, Index_t cols)
+        : pages_{pages}, rows_{rows}, cols_{cols}
     {
-        this->rows_ = rows;
-        this->cols_ = cols;
-        this->data_.resize(pages * rows * cols);
+        data_.resize(pages * rows * cols);
     }
+
+    /** @brief Set size of array
+     *
+     * @warning Does not guarantee validity of stored values after resize
+     */
+    void setDimensions(Index_t pages, Index_t rows, Index_t cols)
+    {
+        pages_ = pages;
+        rows_ = rows;
+        cols_ = cols;
+        data_.resize(pages * rows * cols);
+    }
+
+    Index_t pages() { return pages_; }
+    Index_t rows() { return rows_; }
+    Index_t cols() { return cols_; }
 
     /** @brief Element access */
     T& operator()(Index_t z, Index_t y, Index_t x)
     {
-        return this->data_.at(
-            (z * this->cols_ * this->rows_) + (y * this->cols_) + x);
+        return data_.at((z * cols_ * rows_) + (y * cols_) + x);
     }
 
     /** @overload operator()(Index_t z, Index_t y, Index_t x) */
     const T& operator()(Index_t z, Index_t y, Index_t x) const
     {
-        return this->data_.at(
-            (z * this->cols_ * this->rows_) + (y * this->cols_) + x);
+        return data_.at((z * cols_ * rows_) + (y * cols_) + x);
     }
 
     /** @brief Get page of array */
     Array2D<T> page(Index_t z)
     {
-        auto b = std::next(this->data_.begin(), z * this->cols_ * this->rows_);
-        auto e =
-            std::next(this->data_.begin(), (z + 1) * this->cols_ * this->rows_);
-        return Array2D<T>(this->rows_, this->cols_, b, e);
+        auto b = std::next(data_.begin(), z * cols_ * rows_);
+        auto e = std::next(data_.begin(), (z + 1) * cols_ * rows_);
+        return Array2D<T>(rows_, cols_, b, e);
     }
 
-    /** Deleted operator that doesn't make sense for 3D array */
-    T& operator()(Index_t y, Index_t x) = delete;
-
-    /** @overload T& operator()(Index_t y, Index_t x) */
-    const T& operator()(Index_t y, Index_t x) const = delete;
+    Container data() const { return data_; }
 
 private:
+    /** Number of pages */
     Index_t pages_{0};
+    /** Number of rows */
+    Index_t rows_{0};
+    /** Number of columns */
+    Index_t cols_{0};
+    /** Data storage */
+    Container data_;
 };
 
 class HXT
 {
 public:
-    using Row = std::vector<double>;
-    using Bin = std::vector<Row>;
+    using Bin = Array2D<double>;
+    using Cube = Array3D<double>;
 
     static HXT Read(std::string path);
 
@@ -128,11 +160,11 @@ public:
     uint32_t numberOfBins() { return numBins_; }
 
     // Single bin access
-    Bin bin(uint32_t b) { return bins_[b]; }
-    double binLabel(size_t b) { return binLabels_[b]; }
+    Bin bin(uint32_t b) { return bins_.page(b); }
+    double binLabel(size_t b) { return binLabels_.at(b); }
 
     // All bin access
-    std::vector<Bin> bins() { return bins_; }
+    Cube bins() { return bins_; }
     std::vector<double> binLabels() { return binLabels_; }
 
 protected:
@@ -160,12 +192,11 @@ private:
     uint32_t numBins_{0};
     std::vector<double> binLabels_;
 
-    std::vector<Bin> bins_;
+    Cube bins_;
 
     std::string path_;
     std::fpos_t dataStart_{0};
 
-    Bin readBins_(std::ifstream& ifs);
     inline std::fpos_t pixelBytePosition_(uint32_t b, uint32_t y, uint32_t x);
 };
 }
