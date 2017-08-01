@@ -8,6 +8,7 @@ LandmarkGenerator/runnable.jar
 *.mhd
 *.raw
 *.mha
+*.hxt
 
 *.iconset/
 *bin/
