@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CXX_STANDARD_REQUIRED on)
 
 # HXTIO Library
-add_library(hxtio HXTIO.cpp)
+add_library(hxtio HXTIO.hpp HXTIO.cpp HXTArrays.hpp)
 target_include_directories(hxtio
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
