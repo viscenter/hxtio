@@ -24,7 +24,8 @@ int main(int argc, char* argv[])
 
     // Print bin metadata
     std::cout << "Energy: " << label << std::endl;
-    std::cout << "Size: " << bin.cols() << "x" << bin.rows() << std::endl;
+    std::cout << "Size: " << bin.extents()[1] << "x" << bin.extents()[0]
+              << std::endl;
 
     // Convert to a cv::Mat
     auto mat = cv::Mat(bin.data());

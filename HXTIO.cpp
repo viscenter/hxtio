@@ -90,7 +90,7 @@ HXT HXT::Read(std::string path)
     hxt.dataStart_ = ifs.tellg();
 
     // Load the bins and reorder by bin
-    hxt.bins_.setDimensions(hxt.numBins_, hxt.numRows_, hxt.numCols_);
+    hxt.bins_.setExtents({hxt.numBins_, hxt.numRows_, hxt.numCols_});
     double value;
     for (uint32_t b = 0; b < hxt.numBins_; b++) {
         for (uint32_t y = 0; y < hxt.numRows_; y++) {
@@ -103,7 +103,7 @@ HXT HXT::Read(std::string path)
                                " bytes. Expected: 8";
                     throw std::runtime_error(msg);
                 }
-                hxt.bins_(b, y, x) = value;
+                hxt.bins_({b, y, x}) = value;
             }
         }
     }

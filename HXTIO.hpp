@@ -10,8 +10,8 @@ namespace libhxt
 class HXT
 {
 public:
-    using Bin = Array2D<double>;
-    using Cube = Array3D<double>;
+    using Bin = NDimensionalArray<double, 2>;
+    using Cube = NDimensionalArray<double, 3>;
 
     static HXT Read(std::string path);
 
@@ -22,7 +22,7 @@ public:
     uint32_t numberOfBins() { return numBins_; }
 
     // Single bin access
-    Bin bin(uint32_t b) { return bins_.page(b); }
+    Bin bin(uint32_t b) { return bins_.slice(b); }
     double binLabel(size_t b) { return binLabels_.at(b); }
 
     // All bin access
