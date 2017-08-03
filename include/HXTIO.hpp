@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include "HXTArrays.hpp"
+#include "yanda.hpp"
 
 namespace libhxt
 {
@@ -10,8 +10,8 @@ namespace libhxt
 class HXT
 {
 public:
-    using Bin = NDimensionalArray<double, 2>;
-    using Cube = NDimensionalArray<double, 3>;
+    using Bin = yanda::NDimensionalArray<double, 2>;
+    using Cube = yanda::NDimensionalArray<double, 3>;
 
     static HXT Read(std::string path);
 
