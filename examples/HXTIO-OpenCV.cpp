@@ -27,8 +27,8 @@ int main(int argc, char* argv[])
     std::cout << "Size: " << bin.extents()[1] << "x" << bin.extents()[0]
               << std::endl;
 
-    // Convert to a cv::Mat
-    auto mat = cv::Mat(bin.data());
+    // Convert to a cv::Mat. True copies the data from the returned value
+    auto mat = cv::Mat(bin.data(), true);
     mat = mat.reshape(0, hxt.rows());
 
     // Convert to 16bpc range
