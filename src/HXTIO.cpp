@@ -31,7 +31,7 @@ HXT HXT::Read(std::string path)
     hxt.path_ = path;
 
     // Read the file id
-    Buffer label(8, '\0');
+    Buffer label(9, '\0');
     ifs.read(&label[0], 8);
     hxt.label_ = std::string(label.data());
     if (hxt.label_ != "HEXITECH") {
@@ -59,7 +59,7 @@ HXT HXT::Read(std::string path)
     // File prefix
     int32_t prefixSize;
     ifs.read(reinterpret_cast<char*>(&prefixSize), sizeof(int32_t));
-    Buffer prefix(static_cast<uint32_t>(prefixSize), '\0');
+    Buffer prefix(static_cast<uint32_t>(prefixSize + 1), '\0');
     ifs.read(&prefix[0], prefixSize);
     hxt.filePreFix_ = std::string(prefix.data());
 
@@ -72,7 +72,7 @@ HXT HXT::Read(std::string path)
         ifs.seekg(100 - prefixSize, std::ios_base::seekdir::cur);
         timestampSize = 16;
     }
-    Buffer time(static_cast<uint32_t>(timestampSize), '\0');
+    Buffer time(static_cast<uint32_t>(timestampSize + 1), '\0');
     ifs.read(&time[0], timestampSize);
     hxt.timeStamp_ = std::string(time.data());
 
