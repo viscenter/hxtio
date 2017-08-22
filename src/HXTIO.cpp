@@ -18,7 +18,7 @@ void HXT::printMetadata()
     printf("R, C, B: %d, %d, %d\n", numRows_, numCols_, numBins_);
 }
 
-HXT HXT::Read(std::string path)
+HXT HXT::Read(std::string path, AccessMode mode)
 {
     // Open file
     std::ifstream ifs(path, std::ios::binary);
@@ -29,6 +29,7 @@ HXT HXT::Read(std::string path)
     // Setup the output HXT
     HXT hxt;
     hxt.path_ = path;
+    hxt.accessMode_ = mode;
 
     // Read the file id
     Buffer label(9, '\0');
@@ -89,13 +90,52 @@ HXT HXT::Read(std::string path)
     // Capture the data start position
     hxt.dataStart_ = ifs.tellg();
 
+    // Close the file
+    ifs.close();
+
+    // Cache the bins if necessary
+    if (hxt.accessMode_ == AccessMode::Cached) {
+        hxt.cache_bins_();
+    }
+
+    return hxt;
+}
+
+HXT::Bin HXT::bin(uint32_t b)
+{
+    if (accessMode_ == AccessMode::Cached) {
+        return bins_.slice(b);
+    }
+
+    return read_bin_(b);
+}
+
+HXT::Cube HXT::bins()
+{
+    // Cache the bins if we haven't already
+    if (accessMode_ == AccessMode::Streaming) {
+        accessMode_ = AccessMode::Cached;
+        cache_bins_();
+    }
+
+    return bins_;
+}
+
+void HXT::cache_bins_()
+{
+    // Open file
+    std::ifstream ifs(path_, std::ios::binary);
+    if (!ifs.good()) {
+        throw std::runtime_error("Cannot open file");
+    }
+
     // Load the bins and reorder by bin
-    hxt.bins_.setExtents({hxt.numBins_, hxt.numRows_, hxt.numCols_});
+    bins_.setExtents({numBins_, numRows_, numCols_});
     double value;
-    for (uint32_t b = 0; b < hxt.numBins_; b++) {
-        for (uint32_t y = 0; y < hxt.numRows_; y++) {
-            for (uint32_t x = 0; x < hxt.numCols_; x++) {
-                auto pos = hxt.pixelBytePosition_(b, y, x);
+    for (uint32_t b = 0; b < numBins_; b++) {
+        for (uint32_t y = 0; y < numRows_; y++) {
+            for (uint32_t x = 0; x < numCols_; x++) {
+                auto pos = pixelBytePosition_(b, y, x);
                 ifs.seekg(pos);
                 ifs.read(reinterpret_cast<char*>(&value), sizeof(double));
                 if (ifs.fail()) {
@@ -103,15 +143,39 @@ HXT HXT::Read(std::string path)
                                " bytes. Expected: 8";
                     throw std::runtime_error(msg);
                 }
-                hxt.bins_({b, y, x}) = value;
+                bins_({b, y, x}) = value;
             }
         }
     }
+}
 
-    // Close the file
-    ifs.close();
+HXT::Bin HXT::read_bin_(uint32_t b)
+{
+    // Open file
+    std::ifstream ifs(path_, std::ios::binary);
+    if (!ifs.good()) {
+        throw std::runtime_error("Cannot open file");
+    }
 
-    return hxt;
+    // Load the bin
+    Bin output;
+    output.setExtents({numRows_, numCols_});
+    double value;
+    for (uint32_t y = 0; y < numRows_; y++) {
+        for (uint32_t x = 0; x < numCols_; x++) {
+            auto pos = pixelBytePosition_(b, y, x);
+            ifs.seekg(pos);
+            ifs.read(reinterpret_cast<char*>(&value), sizeof(double));
+            if (ifs.fail()) {
+                auto msg = "Only read " + std::to_string(ifs.gcount()) +
+                           " bytes. Expected: 8";
+                throw std::runtime_error(msg);
+            }
+            output({y, x}) = value;
+        }
+    }
+
+    return output;
 }
 
 std::fpos_t HXT::pixelBytePosition_(uint32_t b, uint32_t y, uint32_t x)

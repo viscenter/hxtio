@@ -9,7 +9,7 @@ int main(int argc, char* argv[])
     uint32_t binID = std::stoul(argv[2]);
 
     // Load the HXT
-    auto hxt = libhxt::HXT::Read(path);
+    auto hxt = libhxt::HXT::Read(path, libhxt::AccessMode::Streaming);
     hxt.printMetadata();
 
     // Get the bin
